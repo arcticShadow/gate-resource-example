@@ -6,16 +6,16 @@ resource_types:
 
 gate-source: &gate-source
   git: 
-    uri: git@github.com:Meshcloud/gate-resource-example.git
-    private_key: ((github-key-readwrite))
+    uri: git@github.com:arcticShadow/gate-resource-example.git
+    private_key: b8b955d2fb2513f44810f1cbff8d30dd24f3b30d
     branch: gates
 
 resources:
   - name: repo
     type: git
     source:
-      uri: git@github.com:Meshcloud/gate-resource-example.git
-      private_key: ((github-key-readwrite))
+      uri: git@github.com:arcticShadow/gate-resource-example.git
+      private_key: b8b955d2fb2513f44810f1cbff8d30dd24f3b30d
       branch: master
 
   - name: a-gate
@@ -69,7 +69,7 @@ jobs:
 
   - name: autoclose-autogate
     plan:
-      - aggregate:
+      - in_parallel:
         - get: a-gate
           trigger: true
         - get: b-gate
@@ -80,7 +80,7 @@ jobs:
 
   - name: echo
     plan:
-      - aggregate:
+      - in_parallel:
         - get: repo
         - get: auto-gate
           trigger: true
