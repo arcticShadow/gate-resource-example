@@ -17,7 +17,7 @@ run:
   args:
   - -ec
   - |
-    build number cat $(../build-number/version) has fully passed
+    echo build number cat $(../build-number/version) has fully passed
     
     echo "passed:"
     cat passed
