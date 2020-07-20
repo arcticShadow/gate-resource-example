@@ -19,7 +19,7 @@ run:
   args:
   - -exc
   - |
-    BUILD_NUMBER=$(cat build-number/version)
+    BUILD_NUMBER=$(cat ../build-number/version)
     # create a new autoclose gate based build number and 2 known build forks (map and common)
     gatefile="$BUILD_NUMBER.autoclose"
 

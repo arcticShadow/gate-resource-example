@@ -3,6 +3,10 @@ resource_types:
   type: docker-image
   source:
     repository: meshcloud/gate-resource
+- name: semver_c
+  type: registry-image
+  source:
+    repository: concourse/semver-resource
 
 gate-source: &gate-source
   git: 
@@ -37,15 +41,16 @@ resources:
       gate: combining-gate
 
   - name: build-number
-    type: semver
+    type: semver_c
     source:
       driver: s3
       initial_version: 0.0.1
       access_key_id: ((aws-access-key-id))
       secret_access_key: ((aws-secret-access-key))
+      session_token: ((aws-session-token))
       bucket: stl-concourse-resources
       region_name: us-west-2
-      key: gate-example/build-number
+      key: gate-example/build-number2
 
 jobs:
   - name: Start
