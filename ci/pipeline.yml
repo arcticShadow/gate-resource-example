@@ -114,15 +114,10 @@ jobs:
       - in_parallel:
         - get: build-number
           passed:
-            - build common
-            - build map
+            - setup combining gate
         - get: package-map-gate
-          passed:
-            - build map
           trigger: true
         - get: package-common-gate
-          passed:
-            - build common
           trigger: true
       - put: combining-gate
         params:

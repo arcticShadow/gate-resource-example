@@ -9,7 +9,7 @@ image_resource:
 
 inputs: 
 - name: combining-gate
-- name: build-version
+- name: build-number
 
 run:
   path: sh
