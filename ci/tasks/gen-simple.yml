@@ -18,5 +18,5 @@ run:
   args:
   - -exc
   - |
-    x=$(cat build-number/version)
+    x=$(cat ../build-number/version)
     echo $x > $x

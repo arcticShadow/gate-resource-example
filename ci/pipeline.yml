@@ -82,6 +82,8 @@ jobs:
       - get: repo
       - task: build
         file: repo/ci/tasks/build-map.yml
+        input_mapping:
+          source-code: repo
       - task: pass gate file
         file: repo/ci/tasks/gen-simple.yml
       - put: put pass gate file
@@ -98,6 +100,8 @@ jobs:
       - get: repo
       - task: build
         file: repo/ci/tasks/build-common.yml
+        input_mapping:
+          source-code: repo
       - task: pass gate file
         file: repo/ci/tasks/gen-simple.yml
       - put: put pass gate file
