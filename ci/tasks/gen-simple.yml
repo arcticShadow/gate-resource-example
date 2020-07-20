@@ -7,6 +7,8 @@ image_resource:
     repository: alpine
     tag: "3.6"
 
+inputs:
+- name: build-number
 outputs: 
 - name: gen
 
@@ -16,5 +18,5 @@ run:
   args:
   - -exc
   - |
-    x=$RANDOM
+    x=$(cat build-number/version)
     echo $x > $x

@@ -7,7 +7,7 @@ resource_types:
 gate-source: &gate-source
   git: 
     uri: git@github.com:arcticShadow/gate-resource-example.git
-    private_key: b8b955d2fb2513f44810f1cbff8d30dd24f3b30d
+    private_key: ((gh_token))
     branch: gates
 
 resources:
@@ -15,75 +15,151 @@ resources:
     type: git
     source:
       uri: git@github.com:arcticShadow/gate-resource-example.git
-      private_key: b8b955d2fb2513f44810f1cbff8d30dd24f3b30d
+      private_key: ((gh_token))
       branch: master
 
-  - name: a-gate
+  - name: package-map-gate
     type: gate-resource
     source:
       <<: *gate-source
-      gate: a
+      gate: package-map
 
-  - name: b-gate
+  - name: package-common-gate
     type: gate-resource
     source:
       <<: *gate-source
-      gate: b
+      gate: package-common
 
-  - name: auto-gate
+  - name: combining-gate
     type: gate-resource
     source:
       <<: *gate-source
-      gate: autogate
+      gate: combining-gate
+
+  - name: build-number
+    type: semver
+    source:
+      driver: s3
+      initial_version: 0.0.1
+      access_key_id: ((aws-access-key-id))
+      secret_access_key: ((aws-secret-access-key))
+      bucket: stl-concourse-resources
+      region_name: us-west-2
+      key: gate-example/build-number
 
 jobs:
-  - name: push-a
+  - name: Start
     plan:
-    - get: repo
-    - task: gen
-      file: repo/ci/tasks/gen-simple.yml
-    - put: a-gate
-      params:
-        item_file: gen/*
-  
-  - name: push-b
-    plan:
-    - get: repo
-    - task: gen
-      file: repo/ci/tasks/gen-simple.yml
-    - put: b-gate
-      params:
-        item_file: gen/*
-    
-  - name: push-autogate
-    plan:
-    - get: repo
-    - aggregate:
-      - get: a-gate
-      - get: b-gate
-    - task: gen
-      file: repo/ci/tasks/gen-autoclose.yml
-    - put: auto-gate
-      params:
-        item_file: gen/*
+      - put: build-number
+        params:
+          bump: major
 
-  - name: autoclose-autogate
+  - name: setup combining gate
+    plan:
+      - get: build-number
+        trigger: true
+        passed:
+          - Start
+      - get: repo
+      - task: create autoclose gate file
+        file: repo/ci/tasks/gen-autoclose.yml
+      - put: put autoclose gate file
+        resource: combining-gate
+        params:
+          item_file: gen/*
+
+  - name: build map
+    plan:
+      - get: build-number
+        trigger: true
+        passed: 
+          - setup combining gate
+      - get: repo
+      - task: build
+        file: repo/ci/tasks/build-map.yml
+      - task: pass gate file
+        file: repo/ci/tasks/gen-simple.yml
+      - put: put pass gate file
+        resource: package-map-gate
+        params:
+          item_file: gen/*
+
+  - name: build common
+    plan:
+      - get: build-number
+        trigger: true
+        passed: 
+          - setup combining gate
+      - get: repo
+      - task: build
+        file: repo/ci/tasks/build-common.yml
+      - task: pass gate file
+        file: repo/ci/tasks/gen-simple.yml
+      - put: put pass gate file
+        resource: package-common-gate
+        params:
+          item_file: gen/*
+    
+  - name: combine gates
     plan:
       - in_parallel:
-        - get: a-gate
+        - get: build-number
+          passed:
+            - build common
+            - build map
+        - get: package-map-gate
+          passed:
+            - build map
           trigger: true
-        - get: b-gate
+        - get: package-common-gate
+          passed:
+            - build common
           trigger: true
-      - put: auto-gate
+      - put: combining-gate
         params:
           update_autoclose: true
-
   - name: echo
     plan:
       - in_parallel:
         - get: repo
-        - get: auto-gate
+        - get: build-number
+          passed:
+            - combine gates
+        - get: combining-gate
           trigger: true
           version: every
       - task: echo
         file: repo/ci/tasks/echo.yml
+
+  # - name: push-autogate
+  #   plan:
+  #   - get: repo
+  #   - in_parallel:
+  #     - get: a-gate
+  #     - get: b-gate
+  #   - task: gen
+  #     file: repo/ci/tasks/gen-autoclose.yml
+  #   - put: auto-gate
+  #     params:
+  #       item_file: gen/*
+
+  # - name: autoclose-autogate
+  #   plan:
+  #     - in_parallel:
+  #       - get: a-gate
+  #         trigger: true
+  #       - get: b-gate
+  #         trigger: true
+  #     - put: auto-gate
+  #       params:
+  #         update_autoclose: true
+
+  # - name: echo
+  #   plan:
+  #     - in_parallel:
+  #       - get: repo
+  #       - get: auto-gate
+  #         trigger: true
+  #         version: every
+  #     - task: echo
+  #       file: repo/ci/tasks/echo.yml

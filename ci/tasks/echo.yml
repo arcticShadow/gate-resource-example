@@ -8,14 +8,17 @@ image_resource:
     tag: "3.6"
 
 inputs: 
-- name: auto-gate
+- name: combining-gate
+- name: build-version
 
 run:
   path: sh
-  dir: auto-gate
+  dir: combining-gate
   args:
   - -ec
   - |
+    build number cat $(build-number/version) has fully passed
+    
     echo "passed:"
     cat passed
     
